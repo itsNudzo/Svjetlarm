@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Svjetlarm</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <div class="svjetlo">
+      <div class="luster"></div>
+      <div class="sijalica">
+        <span></span>
+        <span></span>
+      </div>
+      <div class="salter">
+        <div class="btn"></div>
+      </div>
+      <a href="#" style="--clr: #fff;" id="iskljuciAlarm"><span>Isključi alarm</span></a>
+      <a id="sakrijObavijesti" href="#" style="--clr: #fff;"><span>Sakrij obavijesti</span></a>
+      <div id="alarm-box" class="hidden">
+        <ul id="notifications" class="notifications-container"></ul>
+      </div>
+    </div>
+    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-database-compat.js"></script>
+    <script type="module">
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCYCqDwxkw8Zs5CxOoECtbTFa0sTO6dSeM",
+  authDomain: "smart-light-54f02.firebaseapp.com",
+  databaseURL: "https://svjetlarm-2f17c-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "smart-light-54f02",
+  storageBucket: "smart-light-54f02.appspot.com",
+  messagingSenderId: "190343614699",
+  appId: "1:190343614699:web:4caab4e9142bd256f16eae",
+  measurementId: "G-D239YHEPJL"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+import {
+  getDatabase,
+  ref,
+  child,
+  update,
+  set,
+  get,
+} from "https://www.gstatic.com/firebasejs/10.5.2/firebase-database.js";
+
+let btn = document.querySelector('.btn');
+let body = document.querySelector('body');
+const db = firebase.database();
+let pirValue = 0;
+let systemOn = false;
+btn.onclick=function(){
+  body.classList.toggle('on');
+
+  if(!body.classList.contains('on')) {
+    systemOn = false;
+    db.ref('test').update({
+          systemOn: 0
+          }, function (error) {
+              if(error)
+                  console.error("Error updating status:", error);
+              else 
+                  console.log("Status updated successfully!");
+    });
+  } else {
+    systemOn = true;
+    db.ref('test').update({
+          systemOn: 1
+          }, function (error) {
+              if(error)
+                  console.error("Error updating status:", error);
+              else 
+                  console.log("Status updated successfully!");
+    });
+  }
+}
+
+if(systemOn == false) {
+  db.ref('test').on('value', (snapshot) => {
+          const test = snapshot.val();
+          pirValue = test.pirValue;
+          console.log(pirValue);
+          if(pirValue > 999) {
+            activateSensor();
+          }
+    
+    }); 
+}
+let dugmici = document.querySelectorAll('a');
+dugmici.forEach(dugmic=>{
+  dugmic.onmousemove=function(e){
+    let x=e.pageX-dugmic.offsetLeft;
+    let y=e.pageY-dugmic.offsetTop;
+    dugmic.style.setProperty('--x', x + 'px');
+    dugmic.style.setProperty('--y', y + 'px');
+  }
+})
+
+document.getElementById("iskljuciAlarm").addEventListener('click', () => {
+        db.ref('test').update({
+        alarm: 'iskljucen'
+        }, function (error) {
+            if(error)
+                console.error("Error updating status:", error);
+            else 
+                console.log("Status updated successfully-2!");
+        });
+    });
+
+document.getElementById('sakrijObavijesti').addEventListener('click', function(){
+    var divObavijesti = document.getElementById("alarm-box");
+    divObavijesti.classList.toggle("hidden");
+});
+
+function activateSensor() {
+    var alarmBox = document.getElementById('alarm-box');
+    var notificationsContainer = document.getElementById('notifications');
+    var alarmMessage = document.createElement('li');
+    var deleteButton = document.createElement('button');
+
+    var currentTime = new Date();
+    var hours = currentTime.getHours();
+    var minutes = currentTime.getMinutes();
+    var seconds = currentTime.getSeconds();
+
+    alarmMessage.textContent = "Detektovan pokret u: " + hours + ":" + (minutes < 10 ? "0" + minutes : minutes) + ":" + (seconds < 10 ? "0" + seconds : seconds);
+
+    deleteButton.textContent = "X";
+    deleteButton.classList.add('delete-button');
+    deleteButton.addEventListener('click', function() {
+        deleteNotification(alarmMessage);
+    });
+
+    alarmMessage.appendChild(deleteButton);
+    notificationsContainer.insertBefore(alarmMessage, notificationsContainer.firstChild);
+
+    alarmBox.classList.remove('hidden');
+}
+
+function hideAlarm() {
+    var alarmBox = document.getElementById('alarm-box');
+    alarmBox.classList.add('hidden');
+}
+
+function deleteNotification(notification) {
+    var notificationsContainer = document.getElementById('notifications');
+    notificationsContainer.removeChild(notification);
+}
+    </script>
+  </body>
+</html>
